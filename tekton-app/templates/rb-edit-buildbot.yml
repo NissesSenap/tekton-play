@@ -1,0 +1,15 @@
+# rolebinding build-bot edit
+# Enabels the build-bot sa to perfrom integration tests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: build-bot-edit
+  namespace: {{ include "tekton-app.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+- kind: ServiceAccount
+  name: build-bot
+  namespace: {{ include "tekton-app.fullname" . }}

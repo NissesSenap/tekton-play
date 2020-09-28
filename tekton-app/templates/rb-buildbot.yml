@@ -1,0 +1,15 @@
+# rolebinding build-bot image builder
+# Enabels the build-bot sa to push to the internal container registry
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: build-bot-image-builder
+  namespace: {{ include "tekton-app.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:image-builder
+subjects:
+- kind: ServiceAccount
+  name: build-bot
+  namespace: {{ include "tekton-app.fullname" . }}

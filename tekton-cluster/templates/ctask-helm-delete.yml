@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: helm-delete-blog
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: helm
+spec:
+  description: >-
+    These tasks will delete a helm chart into your Kubernetes /
+    OpenShift Cluster using Helm
+  params:
+    - name: release_name
+      description: The helm release name
+      default: "helm-release"
+    - name: release_namespace
+      description: The helm release namespace
+      default: ""
+    - name: helm_version
+      description: "Specify a specific helm version"
+      default: "latest"
+  steps:
+    - name: delete
+      #image: lachlanevenson/k8s-helm:$(inputs.params.helm_version)
+      image: docker.io/lachlanevenson/k8s-helm:$(inputs.params.helm_version)
+      script: |
+        echo current installed helm releases
+        helm list --namespace "$(inputs.params.release_namespace)"
+        echo deleting helm chart...
+        helm delete $(inputs.params.release_name) --namespace $(inputs.params.release_namespace) || true

@@ -1,0 +1,52 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: megapipe-integration-
+spec:
+  pipelineRef:
+    name: mega-pipe-integration
+  params:
+    # Git params
+    - name: gitUrl 
+      value: {{ .Values.app.gitUrl }}
+    - name: ArgoGitUrl
+      value: {{ .Values.argo.gitUrl }}
+    - name: gitRevision
+      value:  {{ .Values.app.gitRevision }}
+    - name: srcimageUrl
+      value: "image-registry.openshift-image-registry.svc:5000/{{ include "tekton-app.fullname" . }}/{{ .Values.artifactory.image }}"
+    - name: destimageUrl
+      value: "{{ .Values.artifactory.url }}/{{ .Values.artifactory.repo }}/{{ .Values.artifactory.image }}"
+    - name: DSTpwd
+      value: {{ .Values.artifactory.token }}
+    - name: DSTuser
+      value: {{ .Values.artifactory.username }}
+
+    # Helm params
+    - name: helmChartsDir
+      value: {{ .Values.helm.chartsDir }}
+    - name: helmReleaseName
+      value: {{ .Values.helm.releaseName }}
+    - name: helmNS
+      value: {{ include "tekton-app.fullname" . }}
+    - name: helmOverwriteValues
+      value: {{ .Values.helm.overwriteValues }}
+
+    # Integration params
+    - name: integrationHostName
+      value: {{ .Values.integration.hostname }}
+    - name: integrationHostContextRoot
+      value: {{ .Values.integration.contextRoot }}
+
+  serviceAccountName: build-bot
+  workspaces:
+    - name: git-source
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvc.name }}
+    - name: helm-source
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvc.helmName }}
+    - name: maven-settings
+      configMap:
+        name: custom-maven-settings

@@ -1,0 +1,232 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: mega-pipe-integration
+spec:
+  workspaces:
+    - name: git-source
+      description: The git repo
+    - name: helm-source
+      description: The ArgoCD git repo
+    - name: maven-settings
+  params:
+    - name: gitUrl
+      description: Git repository url
+    - name: ArgoGitUrl
+      description: Argo Git repository url
+    - name: ArgoGitRevision
+      description: Argo Git revision to check out
+      default: master
+    - name: gitRevision
+      description: Git revision to check out
+      default: master
+    - name: sslVerify
+      description: Verify ssl from git repo
+      default: "false"
+    - name: pathToContext
+      description: The path to the build context, used by Kaniko - within the workspace
+      default: zip
+    - name: srcimageUrl
+      description: Source image name including repository
+    - name: extraParamImage
+      description: Any extra params that you want to give to kaniko
+      default: "--skip-tls-verify --skip-tls-verify-pull"
+    - name: destimageUrl
+      description: Destination image name including repository
+    - name: DSTpwd
+      description: Password for artifactory destination
+    - name: DSTuser
+      description: Username for artifactory destination
+
+    # helm params
+    - name: helmChartsDir
+      description: The directory in source that contains the helm chart
+    - name: helmReleaseName
+      description: The helm release name
+    - name: helmNS
+      description: The helm release namespace
+    - name: helmOverwriteValues
+      description: Username for artifactory destination
+        
+    # integration
+    - name: integrationPomPath
+      description: The path to integration test pom.xml
+      default: "integrationtest/pom.xml"
+    - name: integrationPomProfile
+      description: The active profile used in pom.xml
+      default: "integrationtest"
+    - name: integrationSSLInsecure
+      description: Disable SSL
+      default: "true"
+    - name: integrationHostScheme
+      description: Use http or https
+      default: http
+    - name: integrationHostPort
+      description: Port
+      default: "9080"
+    - name: integrationHostName
+      description: URI
+    - name: integrationHostContextRoot
+      description: Service context root
+
+  tasks:
+    # Clone repo
+    - name: clone-repo
+      taskRef:
+        kind: ClusterTask
+        name: git-clone-blog
+      workspaces:
+        - name: output
+          workspace: git-source
+      params:
+        - name: url
+          value: "$(params.gitUrl)"
+        - name: revision
+          value: "$(params.gitRevision)"
+        - name: subdirectory
+          value: "."
+        - name: deleteExisting
+          value: "true"
+        - name: sslVerify
+          value: "$(params.sslVerify)"
+
+    # Clone ArgoCD repo
+    - name: argocd-clone-repo
+      taskRef:
+        kind: ClusterTask
+        name: git-clone-blog
+      workspaces:
+        - name: output
+          workspace: helm-source
+      params:
+        - name: url
+          value: "$(params.ArgoGitUrl)"
+        - name: revision
+          value: "$(params.ArgoGitRevision)"
+        - name: subdirectory
+          value: "."
+        - name: deleteExisting
+          value: "true"
+        - name: sslVerify
+          value: "$(params.sslVerify)"
+
+    # Create ear file
+    - name: maven-run-install
+      taskRef:
+        kind: ClusterTask
+        name: maven-blog
+      params:
+        - name: GOALS
+          value:
+            - clean
+            - install
+            - "-Dmaven.wagon.http.ssl.insecure=true"
+            - "-Dmaven.wagon.http.ssl.allowall=true"
+            - "-Dmaven.wagon.http.ssl.ignore.validity.dates=true"
+            - "-Pteamcity"
+      runAfter:
+        - clone-repo
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: git-source
+
+    # Push to internal registry
+    - name: source-to-image
+      taskRef:
+        kind: ClusterTask
+        name: buildah-blog
+      runAfter:
+        - maven-run-install
+      workspaces:
+        - name: source
+          workspace: git-source
+      params:
+        - name: CONTEXT
+          value: $(params.pathToContext)
+        - name: IMAGE
+          value: $(params.srcimageUrl)
+    
+    # HELM install
+    - name: helm-install
+      taskRef:
+        kind: ClusterTask
+        name: helm-upgrade-from-source-blog
+      runAfter:
+        - argocd-clone-repo
+        - source-to-image
+      workspaces:
+        - name: helm-source
+          workspace: helm-source
+      params:
+        - name: charts_dir
+          value: "$(params.helmChartsDir)"
+        - name: release_version
+          value: latest # TODO
+        - name: release_name
+          value:  "$(params.helmReleaseName)"
+        - name: release_namespace
+          value: "$(params.helmNS)"
+        - name: overwrite_values
+          value:  "$(params.helmOverwriteValues)"
+
+    # maven e2e test
+    - name: maven-run-integration-test
+      taskRef:
+        kind: ClusterTask
+        name: maven-blog
+      params:
+        - name: GOALS
+          value:
+            - clean
+            - verify
+            - "-P$(params.integrationPomProfile)"
+            - "-f$(params.integrationPomPath)"
+            - "-e"
+            - "-U"
+            - "-Dmaven.wagon.http.ssl.insecure=$(params.integrationSSLInsecure)"
+            - "-Dmaven.wagon.http.ssl.allowall=$(params.integrationSSLInsecure)"
+            - "-Dmaven.wagon.http.ssl.ignore.validity.dates=$(params.integrationSSLInsecure)"
+            - "-Dendpoint.host.scheme=$(params.integrationHostScheme)"
+            - "-Dendpoint.host.name=$(params.integrationHostName)"
+            - "-Dendpoint.host.port=$(params.integrationHostPort)"
+            - "-Dendpoint.context.root=$(params.integrationHostContextRoot)"
+      runAfter:
+        - helm-install
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: git-source 
+
+    # Copy to external artifactory
+    - name: copy-to-artifactory
+      taskRef:
+        kind: ClusterTask
+        name: skopeo-blog
+      runAfter:
+        - maven-run-integration-test
+      workspaces:
+        - name: source
+          workspace: git-source
+      params:
+        - name: SRC_IMAGE
+          value: $(params.srcimageUrl)
+        - name: DST_IMAGE
+          value: $(params.destimageUrl)
+        - name: DST_USER
+          value: $(params.DSTuser)
+        - name: DST_PASSWORD
+          value:  $(params.DSTpwd)
+
+  finally:
+    - name: final-helm-cleanup
+      taskRef:
+        kind: ClusterTask
+        name: helm-delete-blog
+      params:
+        - name: release_name
+          value:  "$(params.helmReleaseName)"
+        - name: release_namespace
+          value: "$(params.helmNS)"

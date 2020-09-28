@@ -1,0 +1,6 @@
+# Default values for tekton-cluster.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+mvn:
+  image-mvn: gcr.io/cloud-builders/mvn

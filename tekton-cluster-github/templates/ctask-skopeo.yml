@@ -1,0 +1,70 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: skopeo-blog
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: cli
+    tekton.dev/displayName: "skopeo copy"
+
+spec:
+  params:
+    - name: SRC_IMAGE
+      description: The source image from our local registry.
+    - name: DST_IMAGE
+      description: The destination image to our artifactory registry.
+    - name: BUILDER_IMAGE
+      description: The location of the skopeo image.
+      default: docker-quay.io/containers/skopeo:v1.0.0
+    - name: SRC_TLS_VERIFY
+      description: Verify the TLS on the registry endpoint (on source registry)
+      default: "false"
+    - name: DST_TLS_VERIFY
+      description: Verify the TLS on the registry endpoint (on destination registry)
+      default: "false"
+    - name: DST_USER
+      description: The source image user to artifactory
+    - name: DST_PASSWORD
+      description: The source image user password to artifactory
+    - name: ARTIFACTORY_URL
+      description: The artifactory to push the finished image to
+      default: artifactory.example.com
+    - name: TLS_VERIFY
+      description: Verify TLS during skopeo login or not
+      default: "false"
+  workspaces:
+  - name: source
+  results:
+  - name: IMAGE_SHA1
+    description: SHA1 commit id used on artifact
+
+  steps:
+  - script: |
+      # skopeo script
+      #
+      # skopeo login
+      #echo "Skopoe login -u $(params.DST_USER) -p $(params.DST_PASSWORD)"
+      pwd
+      #skopeo login --authfile=/tmp/auth.json --tls-verify=$(params.TLS_VERIFY) -u $(params.DST_USER) -p $(params.DST_PASSWORD) $(params.ARTIFACTORY_URL)
+      #
+      #
+      cat .git/FETCH_HEAD
+      GIT_HASH=$(head -1 .git/FETCH_HEAD |awk '{print $1}')
+      echo "Git hash $GIT_HASH"
+      #
+      # skopeo copy
+      echo "Skopoe copy $(params.SRC_IMAGE) $(params.DST_IMAGE)"
+      
+      # skopeo copy --authfile=/tmp/auth.json --src-tls-verify=$(params.SRC_TLS_VERIFY) --dest-tls-verify=$(params.DST_TLS_VERIFY) docker://$(params.SRC_IMAGE):$GIT_HASH docker://$(params.DST_IMAGE):$GIT_HASH
+
+      # When copying between NS no need to do the login like a external artifactory
+      skopeo copy --src-tls-verify=$(params.SRC_TLS_VERIFY) --dest-tls-verify=$(params.DST_TLS_VERIFY) docker://$(params.SRC_IMAGE):$GIT_HASH docker://$(params.DST_IMAGE):$GIT_HASH
+
+      # Sending the SHA1 id to result
+      head -1 .git/FETCH_HEAD |awk '{print $1}' | tee /tekton/results/IMAGE_SHA1
+    image: $(params.BUILDER_IMAGE)
+    name: skopeo-copy
+    workingDir: $(workspaces.source.path)

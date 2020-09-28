@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-maven-settings
+data:
+  settings.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <settings
+            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd"
+            xmlns="http://maven.apache.org/SETTINGS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+        <mirrors>
+            <mirror>
+                <id>central-proxy</id>
+                <name>Local proxy of central repo</name>
+                <url>https://artifactory.example.com/maven-repo.maven.apache.org</url>
+                <mirrorOf>central</mirrorOf>
+            </mirror>
+        </mirrors>
+    <servers>
+            <server>
+                <id>app-release</id>
+                <username>{{ .Values.artifactory.username }}</username>
+                <password>{{ .Values.artifactory.token }}</password>
+            </server>
+            <server>
+                <id>app-snapshot</id>
+                <username>{{ .Values.artifactory.username }}</username>
+                <password>{{ .Values.artifactory.token }}</password>
+            </server>
+            <server>
+                <id>anly-release</id>
+                <username>{{ .Values.artifactory.username }}</username>
+                <password>{{ .Values.artifactory.token }}</password>
+            </server>
+        </servers>
+    </settings>
