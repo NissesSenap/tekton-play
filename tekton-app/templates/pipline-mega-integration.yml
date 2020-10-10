@@ -16,10 +16,10 @@ spec:
       description: Argo Git repository url
     - name: ArgoGitRevision
       description: Argo Git revision to check out
-      default: master
+      default: main
     - name: gitRevision
       description: Git revision to check out
-      default: master
+      default: main
     - name: sslVerify
       description: Verify ssl from git repo
       default: "false"

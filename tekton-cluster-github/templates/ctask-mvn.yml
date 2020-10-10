@@ -99,8 +99,6 @@ spec:
       [[ -f $(workspaces.maven-settings.path)/settings.xml ]] && cat $(workspaces.maven-settings.path)/settings.xml
       [[ -f $(workspaces.maven-settings.path)/settings.xml ]] || echo skipping settings
   - args:
-    - -s
-    - $(workspaces.maven-settings.path)/settings.xml
     - $(params.GOALS)
     command:
     - /usr/bin/mvn
@@ -110,4 +108,3 @@ spec:
     workingDir: $(workspaces.source.path)
   workspaces:
   - name: source
-  - name: maven-settings

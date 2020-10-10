@@ -7,6 +7,7 @@ app:
 # artifactory global settings
 artifactory:
   url: 'artifactory.example.com'
+  image: 'external-app'
   repo: 'docker-app1'
   token: super-secret-token
   username: user1
@@ -16,27 +17,19 @@ artifactory:
 pvc:
   size: 1Gi
   helmSize: 1Gi
+  name: 'app-pvc'
+  helmName: 'app-helm-pvc'
 
 # Argo Git global settings
 argo:
   gitUrl: 'ssh://git@bitbucket.example.com:7999/ocp/argocd.git'
-
-# artifactory login to get java data + push to docker registry
-artifactory:
-  image: 'external-app'
-
-# PVC
-# In the future we will need to use PVCTemplate but this feature currently isn't implemented in the tekton release that we are using.
-pvc:
-  name: 'app-pvc'
-  helmName: 'app-helm-pvc'
 
 fullnameOverride: "app-ci"
 
 helm:
   chartsDir: 'app'
   releaseName: 'app'
-  overwriteValues: "image.repository=image-registry.openshift-image-registry.svc:5000/exmaple-tekton/app,image.tag=master"
+  overwriteValues: "image.repository=image-registry.openshift-image-registry.svc:5000/app-ci/app,image.tag=main"
 
 integration:
   hostname: 'app'

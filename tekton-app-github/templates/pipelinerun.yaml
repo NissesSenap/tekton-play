@@ -47,6 +47,3 @@ spec:
     - name: helm-source
       persistentVolumeClaim:
         claimName: {{ .Values.pvc.helmName }}
-    - name: maven-settings
-      configMap:
-        name: custom-maven-settings
