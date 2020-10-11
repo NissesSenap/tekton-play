@@ -55,7 +55,9 @@ spec:
       # Buildah steps for git hash and build the image with git hash tag
       #
       cat .git/FETCH_HEAD
-      GIT_HASH=$(head -1 .git/FETCH_HEAD |awk '{print $1}')
+      
+      #GIT_HASH=$(head -1 .git/FETCH_HEAD |awk '{print $1}')
+      GIT_HASH=latest
       echo "Git hash $GIT_HASH"
       buildah --storage-driver=$(params.STORAGE_DRIVER) bud \
         $(params.BUILD_EXTRA_ARGS) --format=$(params.FORMAT) \
@@ -74,7 +76,8 @@ spec:
       # Buildah push
       # 
       cat .git/FETCH_HEAD
-      GIT_HASH=$(head -1 .git/FETCH_HEAD |awk '{print $1}')
+      #GIT_HASH=$(head -1 .git/FETCH_HEAD |awk '{print $1}')
+      GIT_HASH=latest
       echo "Git hash $GIT_HASH"  
       #
       #

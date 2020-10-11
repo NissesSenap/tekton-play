@@ -29,7 +29,7 @@ fullnameOverride: "app-ci"
 helm:
   chartsDir: 'app'
   releaseName: 'app'
-  overwriteValues: "image.repository=image-registry.openshift-image-registry.svc:5000/app-ci/app,image.tag=main"
+  overwriteValues: "image.repository=image-registry.openshift-image-registry.svc:5000/app-ci/app,image.tag=latest"
 
 integration:
   hostname: 'app'
