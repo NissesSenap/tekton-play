@@ -18,7 +18,7 @@ spec:
       description: The destination image to our artifactory registry.
     - name: BUILDER_IMAGE
       description: The location of the skopeo image.
-      default: docker-quay.io/containers/skopeo:v1.0.0
+      default: quay.io/containers/skopeo:v1.0.0
     - name: SRC_TLS_VERIFY
       description: Verify the TLS on the registry endpoint (on source registry)
       default: "false"
@@ -61,7 +61,7 @@ spec:
       # skopeo copy --authfile=/tmp/auth.json --src-tls-verify=$(params.SRC_TLS_VERIFY) --dest-tls-verify=$(params.DST_TLS_VERIFY) docker://$(params.SRC_IMAGE):$GIT_HASH docker://$(params.DST_IMAGE):$GIT_HASH
 
       # When copying between NS no need to do the login like a external artifactory
-      skopeo copy --src-tls-verify=$(params.SRC_TLS_VERIFY) --dest-tls-verify=$(params.DST_TLS_VERIFY) docker://$(params.SRC_IMAGE):$GIT_HASH docker://$(params.DST_IMAGE):$GIT_HASH
+      skopeo copy --src-tls-verify=$(params.SRC_TLS_VERIFY) --dest-tls-verify=$(params.DST_TLS_VERIFY) docker://$(params.SRC_IMAGE):latest docker://$(params.DST_IMAGE):$GIT_HASH
 
       # Sending the SHA1 id to result
       head -1 .git/FETCH_HEAD |awk '{print $1}' | tee /tekton/results/IMAGE_SHA1

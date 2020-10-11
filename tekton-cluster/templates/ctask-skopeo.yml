@@ -18,7 +18,7 @@ spec:
       description: The destination image to our artifactory registry.
     - name: BUILDER_IMAGE
       description: The location of the skopeo image.
-      default: docker-quay.io/containers/skopeo:v1.0.0
+      default: quay.io/containers/skopeo:v1.0.0
     - name: SRC_TLS_VERIFY
       description: Verify the TLS on the registry endpoint (on source registry)
       default: "false"

@@ -6,9 +6,9 @@ app:
 
 # artifactory global settings
 artifactory:
-  url: 'artifactory.example.com'
+  url: 'image-registry.openshift-image-registry.svc:5000'
   image: 'external-app'
-  repo: 'docker-app1'
+  repo: 'app-ci'
   token: super-secret-token
   username: user1
 
