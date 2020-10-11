@@ -33,4 +33,3 @@ helm:
 
 integration:
   hostname: 'app'
-  contextRoot: 'app'

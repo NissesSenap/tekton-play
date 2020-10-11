@@ -36,8 +36,6 @@ spec:
     # Integration params
     - name: integrationHostName
       value: {{ .Values.integration.hostname }}
-    - name: integrationHostContextRoot
-      value: {{ .Values.integration.contextRoot }}
 
   serviceAccountName: build-bot
   workspaces:

@@ -49,25 +49,8 @@ spec:
       description: Username for artifactory destination
         
     # integration
-    - name: integrationPomPath
-      description: The path to integration test pom.xml
-      default: "integrationtest/pom.xml"
-    - name: integrationPomProfile
-      description: The active profile used in pom.xml
-      default: "integrationtest"
-    - name: integrationSSLInsecure
-      description: Disable SSL
-      default: "true"
-    - name: integrationHostScheme
-      description: Use http or https
-      default: http
-    - name: integrationHostPort
-      description: Port
-      default: "9080"
     - name: integrationHostName
       description: URI
-    - name: integrationHostContextRoot
-      description: Service context root
 
   tasks:
     # Clone repo
@@ -123,7 +106,6 @@ spec:
             - "-Dmaven.wagon.http.ssl.insecure=true"
             - "-Dmaven.wagon.http.ssl.allowall=true"
             - "-Dmaven.wagon.http.ssl.ignore.validity.dates=true"
-            - "-Pteamcity"
       runAfter:
         - clone-repo
       workspaces:
@@ -179,19 +161,8 @@ spec:
       params:
         - name: GOALS
           value:
-            - clean
-            - verify
-            - "-P$(params.integrationPomProfile)"
-            - "-f$(params.integrationPomPath)"
-            - "-e"
-            - "-U"
-            - "-Dmaven.wagon.http.ssl.insecure=$(params.integrationSSLInsecure)"
-            - "-Dmaven.wagon.http.ssl.allowall=$(params.integrationSSLInsecure)"
-            - "-Dmaven.wagon.http.ssl.ignore.validity.dates=$(params.integrationSSLInsecure)"
-            - "-Dendpoint.host.scheme=$(params.integrationHostScheme)"
+            - failsafe:integration-test
             - "-Dendpoint.host.name=$(params.integrationHostName)"
-            - "-Dendpoint.host.port=$(params.integrationHostPort)"
-            - "-Dendpoint.context.root=$(params.integrationHostContextRoot)"
       runAfter:
         - helm-install
       workspaces:
