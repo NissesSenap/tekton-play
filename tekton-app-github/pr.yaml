@@ -1,0 +1,50 @@
+# Source: tekton-app/templates/pipelinerun.yaml
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: megapipe-integration-
+spec:
+  pipelineRef:
+    name: mega-pipe-integration
+  params:
+    # Git params
+    - name: gitUrl 
+      value: https://github.com/NissesSenap/openliberty-app.git
+    - name: ArgoGitUrl
+      value: https://github.com/NissesSenap/tekton-play.git
+    - name: gitRevision
+      value:  main
+    - name: srcimageUrl
+      value: "image-registry.openshift-image-registry.svc:5000/app-ci/external-app"
+    - name: destimageUrl
+      value: "image-registry.openshift-image-registry.svc:5000/app-ci/external-app"
+      #value: "artifactory.example.com/docker-app1/external-app"
+    - name: DSTpwd
+      value: super-secret-token
+    - name: DSTuser
+      value: user1
+
+    # Helm params
+    - name: helmChartsDir
+      value: app
+    - name: helmReleaseName
+      value: app
+    - name: helmNS
+      value: app-ci
+    - name: helmOverwriteValues
+      value: image.repository=image-registry.openshift-image-registry.svc:5000/app-ci/external-app,image.tag=latest
+
+    # Integration params
+    - name: integrationHostName
+      value: app
+    - name: integrationHostContextRoot
+      value: app
+
+  serviceAccountName: build-bot
+  workspaces:
+    - name: git-source
+      persistentVolumeClaim:
+        claimName: app-pvc
+    - name: helm-source
+      persistentVolumeClaim:
+        claimName: app-helm-pvc
